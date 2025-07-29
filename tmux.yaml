@@ -1,0 +1,55 @@
+name: tmux
+help: tmux menu
+actions:
+  - name: attach-session
+    template: |
+      if [ -n "$TMUX" ]; then
+        tmux has-session -t {{.name}} 2>/dev/null || tmux new-session -d -s {{.name}}
+        tmux switch-client -t {{.name}}
+      else
+        tmux attach -t {{.name}} || tmux new -s {{.name}}
+      fi
+    params: &params
+      - name: name
+        value: first
+  - name: rename-session
+    template: tmux rename-session {{.name}}
+    params: *params
+  - name: choose-session
+    template: |
+      #!/bin/bash
+
+      if [ -n "$TMUX" ]; then
+        # Already inside tmux — just run choose-session
+        tmux choose-session
+      else
+        chooser="__chooser__"
+
+        # If chooser session exists, kill it first
+        if tmux has-session -t "$chooser" 2>/dev/null; then
+          tmux kill-session -t "$chooser"
+        fi
+        
+        # Create a fresh chooser session
+        tmux new-session -d -s "$chooser"
+        tmux set-option -t "$chooser" allow-rename off
+
+        # Run choose-session inside it
+        tmux send-keys -t "$chooser" "tmux choose-session" C-m
+        tmux attach -t "$chooser"
+      fi
+  - name: kill-session
+    template: |
+      #!/bin/bash
+
+      # Prompt the user to select a session to kill
+      session=$(tmux list-sessions -F '#S' | fzf --prompt="Kill tmux session: ")
+
+      if [ -n "$session" ]; then
+        tmux kill-session -t "$session"
+        echo "Killed session: $session"
+      else
+        echo "No session selected."
+      fi
+  - name: kill-server
+    template: tmux kill-server
