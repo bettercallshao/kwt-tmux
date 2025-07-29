@@ -53,3 +53,22 @@ actions:
       fi
   - name: kill-server
     template: tmux kill-server
+  - name: config
+    template: |
+      cat << 'EOF' > ~/.tmux.conf
+      # 1. Use bash as the default shell
+      set-option -g default-shell /bin/bash
+      set-option -g default-command "/bin/bash -l"
+
+      # 2. Page Up enters copy mode (view mode) and scrolls up
+      bind -n PageUp copy-mode -u
+
+      # 3. Enable vi-style keybindings in copy mode (for VIM-like search, etc.)
+      setw -g mode-keys vi
+
+      # Optional: Enable mouse support for scrolling
+      set -g mouse on
+
+      # Bind Control + D to detach in tmux
+      bind-key -n C-d detach
+      EOF
