@@ -4,17 +4,24 @@ actions:
   - name: attach-session
     template: |
       if [ -n "$TMUX" ]; then
+        if [ "{{.launch}}" != "no" ]; then
+          exit 0
+        fi
         tmux has-session -t {{.name}} 2>/dev/null || tmux new-session -d -s {{.name}}
         tmux switch-client -t {{.name}}
       else
         tmux attach -t {{.name}} || tmux new -s {{.name}}
       fi
-    params: &params
+    params:
       - name: name
         value: first
+      - name: launch
+        value: "no"
   - name: rename-session
     template: tmux rename-session {{.name}}
-    params: *params
+    params:
+      - name: name
+        value: first
   - name: choose-session
     template: |
       #!/bin/bash
